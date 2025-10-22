@@ -1,0 +1,5 @@
+BasedOnStyle: llvm
+IndentWidth: 4
+UseTab: Never
+TabWidth: 4
+AllowShortFunctionsOnASingleLine: None
