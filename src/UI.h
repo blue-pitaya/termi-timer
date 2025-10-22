@@ -12,7 +12,8 @@ typedef enum {
 
 typedef enum {
     STATE_INIT,
-    STATE_STARTED,
+    STATE_RUNNING,
+    STATE_PAUSED,
 } State;
 
 typedef struct {
@@ -20,6 +21,7 @@ typedef struct {
     int terminal_h;
     WINDOW *window;
     struct timeval start;
+    long long total_elapsed_ms;
     State state;
 } UI;
 

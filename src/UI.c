@@ -22,6 +22,10 @@ const int delimeter_w = 1;
 const int timer_display_w = 6 * line_size_x + 2 * delimeter_w + 7 * space;
 const int timer_display_h = line_size_y;
 
+const char *state_init_label = "Init";
+const char *state_running_label = "Running";
+const char *state_paused_label = "Paused";
+
 Err load_terminal_size(UI *ui) {
     struct winsize w;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
@@ -34,8 +38,7 @@ Err load_terminal_size(UI *ui) {
 }
 
 Err UI_init(UI *ui) {
-    // ui->state = STATE_INIT;
-    ui->state = STATE_STARTED;
+    ui->state = STATE_INIT;
     gettimeofday(&ui->start, NULL);
 
     int err;
@@ -51,13 +54,37 @@ Err UI_init(UI *ui) {
 
 Err UI_handle_key(UI *ui, int key) {
     switch (key) {
-    case 'q':
+    case 'q': {
         return ERR_EXIT;
-    case ' ':
-        ui->state = STATE_STARTED;
-        gettimeofday(&ui->start, NULL);
-        ui->start.tv_sec -= 3595;
+    }
+    case ' ': {
+        switch (ui->state) {
+        case STATE_INIT: {
+            ui->state = STATE_RUNNING;
+            ui->total_elapsed_ms = 0;
+            gettimeofday(&ui->start, NULL);
+            break;
+        }
+        case STATE_RUNNING: {
+            ui->state = STATE_PAUSED;
+
+            struct timeval end;
+            gettimeofday(&end, NULL);
+            int elapsed_ms = ui->total_elapsed_ms;
+            elapsed_ms += (end.tv_sec - ui->start.tv_sec) * 1000;
+            elapsed_ms += (end.tv_usec - ui->start.tv_usec) / 1000;
+
+            ui->total_elapsed_ms = elapsed_ms;
+            break;
+        }
+        case STATE_PAUSED: {
+            ui->state = STATE_RUNNING;
+            gettimeofday(&ui->start, NULL);
+            break;
+        }
+        }
         break;
+    }
     }
 
     return ERR_OK;
@@ -120,47 +147,80 @@ void render_delimeter(UI *ui, int start_y, int start_x) {
 void UI_render(UI *ui) {
     box(ui->window, 0, 0);
 
-    struct timeval end;
-    gettimeofday(&end, NULL);
+    int hours = 0;
+    int minutes = 0;
+    int seconds = 0;
 
-    if (ui->state == STATE_STARTED) {
-        int elapsed_ms = (end.tv_sec - ui->start.tv_sec) * 1000;
+    switch (ui->state) {
+    case STATE_INIT: {
+        break;
+    }
+    case STATE_RUNNING: {
+        struct timeval end;
+        gettimeofday(&end, NULL);
+        int elapsed_ms = ui->total_elapsed_ms;
+        elapsed_ms += (end.tv_sec - ui->start.tv_sec) * 1000;
         elapsed_ms += (end.tv_usec - ui->start.tv_usec) / 1000;
 
-        int seconds = (elapsed_ms / 1000) % 60;
-        int minutes = ((elapsed_ms / 1000) / 60) % 60;
-        int hours = (elapsed_ms / 1000) / 3600;
-
-        int window_h, window_w;
-        getmaxyx(ui->window, window_h, window_w);
-
-        int offset_y = window_h / 2 - (timer_display_h / 2);
-        int offset_x = window_w / 2 - (timer_display_w / 2);
-
-        offset_x += 0;
-        render_digit(ui, offset_y, offset_x, (hours / 10) % 10);
-
-        offset_x += line_size_x + space;
-        render_digit(ui, offset_y, offset_x, hours % 10);
-
-        offset_x += line_size_x + space;
-        render_delimeter(ui, offset_y, offset_x);
-
-        offset_x += delimeter_w + space;
-        render_digit(ui, offset_y, offset_x, (minutes / 10) % 10);
-
-        offset_x += line_size_x + space;
-        render_digit(ui, offset_y, offset_x, minutes % 10);
-
-        offset_x += line_size_x + space;
-        render_delimeter(ui, offset_y, offset_x);
-
-        offset_x += delimeter_w + space;
-        render_digit(ui, offset_y, offset_x, (seconds / 10) % 10);
-
-        offset_x += line_size_x + space;
-        render_digit(ui, offset_y, offset_x, seconds % 10);
+        hours = (elapsed_ms / 1000) / 3600;
+        minutes = ((elapsed_ms / 1000) / 60) % 60;
+        seconds = (elapsed_ms / 1000) % 60;
+        break;
     }
+    case STATE_PAUSED: {
+        int elapsed_ms = ui->total_elapsed_ms;
+
+        hours = (elapsed_ms / 1000) / 3600;
+        minutes = ((elapsed_ms / 1000) / 60) % 60;
+        seconds = (elapsed_ms / 1000) % 60;
+        break;
+    }
+    }
+
+    int window_h, window_w;
+    getmaxyx(ui->window, window_h, window_w);
+
+    int offset_y = window_h / 2 - (timer_display_h / 2);
+    int offset_x = window_w / 2 - (timer_display_w / 2);
+
+    const char *label;
+    switch (ui->state) {
+    case STATE_INIT:
+        label = state_init_label;
+        break;
+    case STATE_RUNNING:
+        label = state_running_label;
+        break;
+    case STATE_PAUSED:
+        label = state_paused_label;
+        break;
+    }
+
+    mvwprintw(ui->window, 1, 1, "Status: %s", label);
+
+    offset_x += 0;
+    render_digit(ui, offset_y, offset_x, (hours / 10) % 10);
+
+    offset_x += line_size_x + space;
+    render_digit(ui, offset_y, offset_x, hours % 10);
+
+    offset_x += line_size_x + space;
+    render_delimeter(ui, offset_y, offset_x);
+
+    offset_x += delimeter_w + space;
+    render_digit(ui, offset_y, offset_x, (minutes / 10) % 10);
+
+    offset_x += line_size_x + space;
+    render_digit(ui, offset_y, offset_x, minutes % 10);
+
+    offset_x += line_size_x + space;
+    render_delimeter(ui, offset_y, offset_x);
+
+    offset_x += delimeter_w + space;
+    render_digit(ui, offset_y, offset_x, (seconds / 10) % 10);
+
+    offset_x += line_size_x + space;
+    render_digit(ui, offset_y, offset_x, seconds % 10);
 }
 
 void UI_destroy(UI *ui) {

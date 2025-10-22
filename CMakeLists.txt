@@ -20,6 +20,6 @@ set(SOURCES
 )
 
 # Executable
-add_executable(main ${SOURCES})
-target_link_libraries(main ${GLIB2_LIBRARIES} ${CURSES_LIBRARIES})
-target_compile_options(main PRIVATE ${GLIB2_CFLAGS_OTHER})
+add_executable(stopwatch ${SOURCES})
+target_link_libraries(stopwatch ${GLIB2_LIBRARIES} ${CURSES_LIBRARIES})
+target_compile_options(stopwatch PRIVATE ${GLIB2_CFLAGS_OTHER})
