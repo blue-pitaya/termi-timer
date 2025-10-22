@@ -1,7 +1,6 @@
 #include "UI.h"
 #include <bits/types/struct_timeval.h>
 #include <dirent.h>
-#include <glib.h>
 #include <linux/limits.h>
 #include <ncurses.h>
 #include <sys/ioctl.h>

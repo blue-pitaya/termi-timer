@@ -1,6 +1,5 @@
 #include "src/UI.h"
 #include <dirent.h>
-#include <glib.h>
 #include <locale.h>
 #include <ncurses.h>
 #include <sys/ioctl.h>
