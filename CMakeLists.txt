@@ -15,6 +15,6 @@ set(SOURCES
 )
 
 # Executable
-add_executable(stopwatch ${SOURCES})
-target_link_libraries(stopwatch ${CURSES_LIBRARIES})
-target_compile_options(stopwatch PRIVATE)
+add_executable(tui-timer ${SOURCES})
+target_link_libraries(tui-timer ${CURSES_LIBRARIES})
+target_compile_options(tui-timer PRIVATE)
