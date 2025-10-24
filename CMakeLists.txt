@@ -15,6 +15,6 @@ set(SOURCES
 )
 
 # Executable
-add_executable(tui-timer ${SOURCES})
-target_link_libraries(tui-timer ${CURSES_LIBRARIES})
-target_compile_options(tui-timer PRIVATE)
+add_executable(termi-timer ${SOURCES})
+target_link_libraries(termi-timer ${CURSES_LIBRARIES})
+target_compile_options(termi-timer PRIVATE)
