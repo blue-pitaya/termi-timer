@@ -29,5 +29,6 @@ Err UI_init(UI *);
 Err UI_handle_key(UI *, int key);
 void UI_render(UI *);
 void UI_destroy(UI *ui);
+void UI_resize(UI *ui);
 
 #endif

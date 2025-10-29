@@ -144,6 +144,7 @@ void render_delimeter(UI *ui, int start_y, int start_x) {
 }
 
 void UI_render(UI *ui) {
+    werase(ui->window);
     box(ui->window, 0, 0);
 
     int hours = 0;
@@ -220,10 +221,22 @@ void UI_render(UI *ui) {
 
     offset_x += line_size_x + space;
     render_digit(ui, offset_y, offset_x, seconds % 10);
+
+    wrefresh(ui->window);
 }
 
 void UI_destroy(UI *ui) {
     wborder(ui->window, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
     wrefresh(ui->window);
     delwin(ui->window);
+}
+
+void UI_resize(UI *ui) {
+    int new_rows, new_cols;
+    getmaxyx(stdscr, new_rows, new_cols);
+    ui->terminal_w = new_cols;
+    ui->terminal_h = new_rows;
+    resize_term(new_rows, new_cols);
+    mvwin(ui->window, ui->terminal_h / 4, ui->terminal_w / 4);
+    wresize(ui->window, ui->terminal_h / 2, ui->terminal_w / 2);
 }

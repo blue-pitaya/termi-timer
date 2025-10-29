@@ -2,10 +2,16 @@
 #include <dirent.h>
 #include <locale.h>
 #include <ncurses.h>
+#include <signal.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
 UI ui;
+
+volatile sig_atomic_t resized = 0;
+void handle_winch(int sig) {
+    resized = 1;
+}
 
 int main(void) {
     setlocale(LC_ALL, "");
@@ -14,6 +20,8 @@ int main(void) {
     cbreak();
     curs_set(0);
     noecho();
+
+    signal(SIGWINCH, handle_winch);
 
     start_color();
     use_default_colors();
@@ -35,10 +43,15 @@ int main(void) {
         }
         key = -1;
 
-        werase(ui.window);
-        UI_render(&ui);
-        wrefresh(ui.window);
+        if (resized) {
+            resized = 0;
+            endwin();
+            refresh();
+            clear();
+            UI_resize(&ui);
+        }
 
+        UI_render(&ui);
         napms(33);
     }
 
